@@ -6,9 +6,9 @@ from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from .workflows.user_summary import UserSummaryWorkflow
-from .workflows.reply_generation import ReplyGenerationWorkflow
-from .workflows.embeddings import EmbeddingsWorkflow
+from app.workflows.user_summary import UserSummaryWorkflow
+from app.workflows.reply_generation import ReplyGenerationWorkflow
+from app.workflows.embeddings import EmbeddingsWorkflow
 
 app = FastAPI(
     title="AI Reply Service",
@@ -21,11 +21,16 @@ class UserData(BaseModel):
     """User data for summary generation"""
     user_data: Dict
 
+class EmbeddingData(BaseModel):
+    """Embedding data structure"""
+    vector: List[float]
+    dimensions: int
+
 class UserSummaryResponse(BaseModel):
     """Response from user summary workflow"""
     keywords: List[str]
     raw_summary: str
-    embedding: Dict[str, List[float]]
+    embedding: EmbeddingData
 
 class ReplyRequest(BaseModel):
     """Request for reply generation"""
@@ -46,7 +51,7 @@ class EmbeddingsRequest(BaseModel):
 class EmbeddingsResponse(BaseModel):
     """Response from embeddings workflow"""
     prepared_text: str
-    embedding: Dict[str, List[float]]
+    embedding: EmbeddingData
 
 # Workflow Instances
 user_summary_workflow = UserSummaryWorkflow()

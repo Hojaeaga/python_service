@@ -12,7 +12,7 @@ from langchain.prompts import (
 )
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from .models.llm import get_reasoning_model, get_embeddings_model
+from .models.llm import get_embeddings_model, get_reasoning_model
 from .prompts import (
     CONTENT_DISCOVERY_PROMPT,
     EMBEDDINGS_PROMPT,
@@ -181,4 +181,3 @@ async def generate_embedding(state: Dict[str, Any]) -> Dict[str, Any]:
 
     state["embedding"] = {"vector": embedding, "dimensions": len(embedding)}
     return state
-
