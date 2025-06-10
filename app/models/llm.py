@@ -3,36 +3,59 @@ Centralized LLM model configurations
 """
 
 import os
+from typing import Any, Dict
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from openai import OpenAI
 
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-REASONING_MODEL = ChatOpenAI(model="o4-mini", api_key=OPENAI_API_KEY, temperature=1)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-GENERATION_MODEL = ChatOpenAI(
-    model="gpt-4.1-mini", api_key=OPENAI_API_KEY, temperature=1
-)
+# Model names
+REASONING_MODEL = "o4-mini"
+GENERATION_MODEL = "gpt-4.1-mini"
+EMBEDDINGS_MODEL = "text-embedding-3-small"
 
-EMBEDDINGS_MODEL = OpenAIEmbeddings(
-    model="text-embedding-3-small", api_key=OPENAI_API_KEY
-)
+async def get_structured_response(
+    model: str,
+    messages: list[Dict[str, str]],
+    response_format: Dict[str, Any],
+    temperature: float = 1.0
+) -> Dict[str, Any]:
+    """Get structured response from OpenAI API"""
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        response_format={"type": "json_object"}
+    )
+    
+    # Parse the JSON response
+    try:
+        import json
+        return json.loads(response.choices[0].message.content)
+    except Exception as e:
+        raise ValueError(f"Failed to parse response: {str(e)}")
 
+async def get_embeddings(text: str) -> list[float]:
+    """Get embeddings from OpenAI API"""
+    response = client.embeddings.create(
+        model=EMBEDDINGS_MODEL,
+        input=text
+    )
+    return response.data[0].embedding
 
 # Factory functions to ensure consistent model creation
-def get_reasoning_model() -> ChatOpenAI:
-    """Get the reasoning model instance"""
+def get_reasoning_model() -> str:
+    """Get the reasoning model name"""
     return REASONING_MODEL
 
-
-def get_generation_model() -> ChatOpenAI:
-    """Get the generation model instance"""
+def get_generation_model() -> str:
+    """Get the generation model name"""
     return GENERATION_MODEL
 
-
-def get_embeddings_model() -> OpenAIEmbeddings:
-    """Get the embeddings model instance"""
+def get_embeddings_model() -> str:
+    """Get the embeddings model name"""
     return EMBEDDINGS_MODEL
-

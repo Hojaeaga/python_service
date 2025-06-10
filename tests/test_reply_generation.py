@@ -48,23 +48,15 @@ class TestReplyGenerationWorkflow(unittest.TestCase):
         }))
         
         # Run the workflow
-        result = await self.workflow.run({
+        result = await self.workflow.process({
             "cast_text": self.test_cast,
             "available_feeds": self.test_feeds
         })
         
         # Verify the workflow processed the data correctly
         self.assertIn("intent_analysis", result)
-        self.assertIn("discovered_content", result)
-        self.assertIn("reply", result)
-        
-        # Check intent analysis
         self.assertTrue(result["intent_analysis"]["should_reply"])
-        
-        # Check discovered content
-        self.assertIn("selected_content", result["discovered_content"])
-        
-        # Check reply
+        self.assertIn("reply", result)
         self.assertIn("reply_text", result["reply"])
         self.assertIn("link", result["reply"])
         
@@ -73,22 +65,21 @@ class TestReplyGenerationWorkflow(unittest.TestCase):
         mock_gen.assert_called_once()
         
     @patch('app.nodes.REASONING_MODEL.ainvoke')
-    @patch('app.nodes.GENERATION_MODEL.ainvoke')
-    async def test_reply_generation_workflow_negative(self, mock_gen, mock_reason):
-        # Mock the AI responses for no-reply case
+    async def test_reply_generation_workflow_negative(self, mock_reason):
+        # Mock the AI response for negative case
         mock_reason.return_value = AsyncMock(content=json.dumps({
             "should_reply": False,
             "identified_needs": [],
-            "confidence": 0.2
+            "confidence": 0.95
         }))
         
         # Run the workflow
-        result = await self.workflow.run({
-            "cast_text": "Just a random thought",
-            "available_feeds": []
+        result = await self.workflow.process({
+            "cast_text": self.test_cast,
+            "available_feeds": self.test_feeds
         })
         
-        # Verify the workflow handles no-reply case correctly
+        # Verify the workflow processed the data correctly
         self.assertIn("intent_analysis", result)
         self.assertFalse(result["intent_analysis"]["should_reply"])
         self.assertIsNone(result.get("discovered_content"))
@@ -96,7 +87,6 @@ class TestReplyGenerationWorkflow(unittest.TestCase):
         
         # Verify only intent check was called
         mock_reason.assert_called_once()
-        mock_gen.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main() 

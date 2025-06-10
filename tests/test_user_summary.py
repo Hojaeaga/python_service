@@ -78,5 +78,40 @@ class TestUserSummaryWorkflow(unittest.TestCase):
         self.assertIn("user_embedding", result)
         self.assertEqual(result["user_summary"]["keywords"], [""])
 
+    @patch('app.nodes.REASONING_MODEL.ainvoke')
+    async def test_user_summary_workflow_positive(self, mock_reason):
+        # Mock the AI response
+        mock_reason.return_value = AsyncMock(content=json.dumps({
+            "keywords": ["web3", "ai", "programming", "crypto"],
+            "raw_summary": "Tech-savvy developer focused on web3 and AI"
+        }))
+        
+        # Run the workflow
+        result = await self.workflow.process({"user_data": self.test_user_data})
+        
+        # Verify the workflow processed the data correctly
+        self.assertIn("user_summary", result)
+        self.assertIn("keywords", result["user_summary"])
+        self.assertIn("raw_summary", result["user_summary"])
+        self.assertIn("user_embedding", result)
+        
+    @patch('app.nodes.REASONING_MODEL.ainvoke')
+    async def test_user_summary_workflow_empty(self, mock_reason):
+        # Mock the AI response for empty data
+        mock_reason.return_value = AsyncMock(content=json.dumps({
+            "keywords": [],
+            "raw_summary": "No user data available"
+        }))
+        
+        # Run the workflow with empty data
+        empty_user_data = {}
+        result = await self.workflow.process({"user_data": empty_user_data})
+        
+        # Verify the workflow handled empty data correctly
+        self.assertIn("user_summary", result)
+        self.assertIn("keywords", result["user_summary"])
+        self.assertIn("raw_summary", result["user_summary"])
+        self.assertIn("user_embedding", result)
+
 if __name__ == '__main__':
     unittest.main() 

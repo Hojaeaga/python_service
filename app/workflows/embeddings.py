@@ -5,7 +5,8 @@ from typing import Dict, Any
 
 from langgraph.graph import Graph
 
-from ..nodes import prepare_embedding_text, generate_embedding
+from ..models.llm import get_embeddings
+from ..nodes import prepare_embedding_text
 
 class EmbeddingsWorkflow:
     """Workflow for generating embeddings"""
@@ -18,7 +19,7 @@ class EmbeddingsWorkflow:
         # Create nodes
         nodes = {
             "prepare_text": prepare_embedding_text,
-            "generate_embedding": generate_embedding
+            "generate_embedding": get_embeddings
         }
         
         # Create graph

@@ -1,22 +1,59 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+"""
+Base workflow implementation
+"""
+from typing import Dict, Any, List
 
-from pydantic import BaseModel
+from langgraph.graph import Graph
 
-class WorkflowConfig(BaseModel):
+class WorkflowConfig:
     """Base configuration for workflows"""
-    max_tokens: Optional[int] = None
-    streaming: bool = False
+    pass
 
-class BaseWorkflow(ABC):
+class BaseWorkflow:
     """Base class for all workflows"""
     
-    @abstractmethod
-    async def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process the input data and return results"""
-        pass
+    def __init__(self, config: WorkflowConfig):
+        self.config = config
+        self.graph = None
     
-    @abstractmethod
+    def _get_workflow_steps(self) -> List[str]:
+        """Get the list of steps in the workflow"""
+        return []
+    
+    def _build_graph(self) -> Graph:
+        """Build the workflow graph"""
+        raise NotImplementedError
+    
+    async def _execute_with_logging(self, initial_state: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the workflow with logging"""
+        try:
+            # Execute the workflow
+            result = await self.graph.ainvoke(initial_state)
+            
+            # If result is a dict and doesn't have a reply key, add a default structure
+            if isinstance(result, dict) and "reply" not in result:
+                result = {
+                    "reply": {
+                        "reply_text": "No response generated",
+                        "link": None
+                    }
+                }
+            
+            return result
+            
+        except Exception as e:
+            # Return a safe default response
+            return {
+                "reply": {
+                    "reply_text": f"Error occurred: {str(e)}",
+                    "link": None
+                }
+            }
+    
+    async def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process the input data"""
+        raise NotImplementedError
+    
     def get_config(self) -> Dict[str, Any]:
         """Get the workflow configuration"""
-        pass 
+        return self.config.__dict__ 

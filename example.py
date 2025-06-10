@@ -31,7 +31,7 @@ async def run_user_summary_example():
     }
     
     workflow = UserSummaryWorkflow()
-    result = await workflow.run({"user_data": user_data})
+    result = await workflow.process({"user_data": user_data})
     
     print("\nUser Keywords:", ", ".join(result["user_summary"]["keywords"]))
     print("\nRaw Summary:", result["user_summary"]["raw_summary"])
@@ -59,7 +59,7 @@ async def run_reply_generation_example():
     ]
     
     workflow = ReplyGenerationWorkflow()
-    result = await workflow.run({
+    result = await workflow.process({
         "cast_text": cast_text,
         "available_feeds": available_feeds
     })
@@ -90,7 +90,7 @@ async def run_embeddings_example():
     }
     
     workflow = EmbeddingsWorkflow()
-    result = await workflow.run({"input_data": input_data})
+    result = await workflow.process({"input_data": input_data})
     
     print("\nPrepared Text:", result["prepared_text"])
     print("\nEmbedding Dimensions:", result["embedding"]["dimensions"])

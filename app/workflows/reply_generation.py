@@ -6,13 +6,27 @@ from typing import Dict, Any
 from langgraph.graph import Graph
 
 from ..nodes import check_reply_intent, discover_relevant_content, generate_reply
+from .base import BaseWorkflow, WorkflowConfig
 
-class ReplyGenerationWorkflow:
+class ReplyGenerationConfig(WorkflowConfig):
+    """Configuration for reply generation workflow"""
+    pass
+
+class ReplyGenerationWorkflow(BaseWorkflow):
     """Workflow for generating contextual replies"""
     
-    def __init__(self):
+    def __init__(self, config: ReplyGenerationConfig = ReplyGenerationConfig()):
+        super().__init__(config)
         self.graph = self._build_graph()
-        
+    
+    def _get_workflow_steps(self) -> list[str]:
+        """Get the list of steps in the workflow"""
+        return [
+            "check_intent",
+            "discover_content",
+            "generate_reply"
+        ]
+    
     def _build_graph(self) -> Graph:
         """Build the workflow graph"""
         # Create nodes
@@ -41,6 +55,20 @@ class ReplyGenerationWorkflow:
         # Compile
         return graph.compile()
     
-    async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Run the workflow"""
-        return await self.graph.ainvoke(inputs) 
+        # Prepare the initial state
+        initial_state = {
+            "cast_text": input_data["cast_text"],
+            "available_feeds": input_data.get("available_feeds", [])
+        }
+        
+        # Execute the workflow
+        result = await self.graph.ainvoke(initial_state)
+        
+        # Return the raw result
+        return result
+    
+    def get_config(self) -> Dict[str, Any]:
+        """Get the workflow configuration"""
+        return self.config.__dict__ 

@@ -82,5 +82,58 @@ class TestEmbeddingsWorkflow(unittest.TestCase):
         self.assertIn("prepared_text", result)
         self.assertIn("embedding", result)
 
+    @patch('app.nodes.EMBEDDING_MODEL.ainvoke')
+    async def test_embeddings_workflow_positive(self, mock_embed):
+        # Mock the embedding model response
+        mock_embed.return_value = AsyncMock(content=json.dumps({
+            "vector": [0.1, 0.2, 0.3],
+            "dimensions": 3
+        }))
+        
+        # Run the workflow
+        result = await self.workflow.process({"input_data": self.test_input})
+        
+        # Verify the workflow processed the data correctly
+        self.assertIn("prepared_text", result)
+        self.assertIn("embedding", result)
+        self.assertIn("vector", result["embedding"])
+        self.assertIn("dimensions", result["embedding"])
+        
+    @patch('app.nodes.EMBEDDING_MODEL.ainvoke')
+    async def test_embeddings_workflow_empty(self, mock_embed):
+        # Mock the embedding model response for empty input
+        mock_embed.return_value = AsyncMock(content=json.dumps({
+            "vector": [],
+            "dimensions": 0
+        }))
+        
+        # Run the workflow with empty input
+        empty_input = {}
+        result = await self.workflow.process({"input_data": empty_input})
+        
+        # Verify the workflow handled empty input correctly
+        self.assertIn("prepared_text", result)
+        self.assertIn("embedding", result)
+        self.assertIn("vector", result["embedding"])
+        self.assertIn("dimensions", result["embedding"])
+        
+    @patch('app.nodes.EMBEDDING_MODEL.ainvoke')
+    async def test_embeddings_workflow_malformed(self, mock_embed):
+        # Mock the embedding model response for malformed input
+        mock_embed.return_value = AsyncMock(content=json.dumps({
+            "vector": [0.0, 0.0, 0.0],
+            "dimensions": 3
+        }))
+        
+        # Run the workflow with malformed input
+        malformed_input = {"invalid": "data"}
+        result = await self.workflow.process({"input_data": malformed_input})
+        
+        # Verify the workflow handled malformed input correctly
+        self.assertIn("prepared_text", result)
+        self.assertIn("embedding", result)
+        self.assertIn("vector", result["embedding"])
+        self.assertIn("dimensions", result["embedding"])
+
 if __name__ == '__main__':
     unittest.main() 
